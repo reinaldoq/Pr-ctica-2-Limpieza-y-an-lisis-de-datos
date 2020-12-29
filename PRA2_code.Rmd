@@ -1,0 +1,161 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Resolucion
+
+Descripcion del dataset
+
+***
+# ELECCIÓN JUEGO DE DATOS
+***
+Solo en 2012, muerieron más de 17 millones de personas en el mundo por enfermedades cardiovasculares, según datos oficiales de la Organización Mundial de la Salud, convirtiéndose en una de las principales causa de denfunción a nivel mundial. Las enfermedades cardiovasculares son un conjunto del trastorno del corazón y los vasos sanguíneos. 
+
+El data set elegido ha sido "Heart Disease Data Set" obtenidos de distintas fuentes: Cleveland Clinical Foundation, Instituto de Cardiología de Hungria, V.A Centro Médico y la Universidad de Zurich. El motivo por el que elegí este data set, o más concretamente, este campo de estudio que son las enfermedades cardiovasculares, fue porque quería comprobar cómo los avances que ofrece el análisis de datos pueden ser primordiales a la hora de identificar de manera precoz la presencia de enfermedades cardiovasculares en los pacientes. La ventaja de usar la metodología que ofrece el aprendizaje automático es que puede manejar una cantidad de datos ingente y obtenidos de un centenar de fuentes diferentes, lo que nos deja con unos datos variodos a la par que complejos, puesto que los resultados obtenidos de las distintas pruebas o análisis médicos resultan difícil de ser analizados a grande escala.
+
+
+El conjunto de datos Utilizado cuenta con las siguientes variables:
+1. (age) age: age in years
+2. (sex) sex (1 = male; 0 = female)
+3. (cp) chest pain type
+-- Value 1: typical angina
+-- Value 2: atypical angina
+-- Value 3: non-anginal pain
+-- Value 4: asymptomatic
+4. (trestbps) resting blood pressure (in mm Hg on admission to the hospital)
+5. (chol) serum cholestoral in mg/dl
+6. (fbs) (fasting blood sugar > 120 mg/dl) (1 = true; 0 = false)
+7. (restecg) resting electrocardiographic results
+-- Value 0: normal
+-- Value 1: having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV)
+-- Value 2: showing probable or definite left ventricular hypertrophy by Estes' criteria
+8. (thalach) maximum heart rate achieved
+9. (exang) exercise induced angina (1 = yes; 0 = no)
+10. (oldpeak) ST depression induced by exercise relative to rest
+11. (slope) the slope of the peak exercise ST segment
+-- Value 1: upsloping
+-- Value 2: flat
+-- Value 3: downsloping
+12. (ca) number of major vessels (0-3) colored by flourosopy
+13. (thal) 3 = normal; 6 = fixed defect; 7 = reversable defect
+14. (num) (the predicted attribute) diagnosis of heart disease (angiographic disease status)
+-- Value 0: < 50% diameter narrowing
+-- Value 1: > 50% diameter narrowing
+(in any major vessel: attributes 59 through 68 are vessels)
+
+Con este estudio, pretendo lograr un análisis preeliminar de cara a realizar diferentes actividades con ellos en el futuro. En primera instancia, cargaremos y transformaremos los datos. Luego haremos un análisis exploratorio en el que identificaremos tendencias y anomalías. Podremos analizar la correlación que hay entre los distintos síntomas (las distintas variables) que nos permitirán determinar qué datos son los más relevantes a la hora de determinar qué pacientes pueden o están desarrollando una enfermedad cardiovascular. Nos centraremos sobre todo en saber si hay alguna diferencia entre los síntomas o resultados de las pruebas en las mujeres con respecto a los de los hombres.
+
+
+***
+# CARGA DE DATOS
+***
+```{r}
+
+# cargamos los datos
+cleveland <- read.csv('https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data',na = "?",stringsAsFactors = FALSE, header = FALSE)
+hungarian <- read.csv('https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.hungarian.data',na = "?",stringsAsFactors = FALSE, header = FALSE)
+switzer <- read.csv('https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.switzerland.data',na = "?",stringsAsFactors = FALSE, header = FALSE)
+longbeach <- read.csv('https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.va.data',na = "?",stringsAsFactors = FALSE, header = FALSE)
+
+# guardamos los distintos archivos en un único data frame y cargamos los nombres
+heartData <- rbind(cleveland,hungarian,switzer,longbeach)
+names(heartData) <- c("age","sex","cp","trestbps","chol","fbs","restecg","thalach","exang","oldpeak","slope","ca","thal","goal")
+
+#View(heartData)
+
+# analizamos los datos que tenemos
+
+# sex: edad en años (continua)
+# sex: 1 = hombre, 0 = mujer (categórica)
+# cp: (chest pain) tipo de dolor de pecho: 1 = typical angina; 2 = atypical angina; 3 = non-anginal pain; 4 = asymptotic (categórica)
+# trestbps: (Resting Blood Pressure) presión arterial en reposo (in mm Hg a la hora de ser ingresado en el hospital) (continua)
+# chol: (Serum Cholestrol) colesterol en mg/dL (continua)
+# fbs: (Fasting Blood Sugar) compara el azúcar en sangre estando en ayunas > 120 mg/dl (1 = true, 0 = false) (categórica)
+# restecg: resultados del electrocardiograma en reposo: 0 = normal; 1 = havingST-T wave abnormality; 2 = left ventricular hyperthrophy (categórica)
+# thalach: (Max heart rate achieved) ritmo cardiaco (continua)
+# exang: (Exercise induced angina) angina (1 = yes; 0 = no) (categórica)
+# oldpeak: depresión del segmento ST inducida por el ejercicio relativo al reposo (continua)
+# slope: (Peak exercise ST segment) pendiente del máximo del ejercicio del segmento ST: 1 = upsloping; 2 = flat; 3 = downsloping (categórica)
+# ca: número mayor de vasos (continua)
+# thal: 3 = normal; 6 = fixed defect; 7 = reversable defect (categórica)
+# goal: si el individuo sufre enfermedad cardiovasclar o no: 0 = no; 1,2,3,4 = sí (categórica)
+
+str(heartData)
+summary(heartData)
+
+```
+
+
+***
+# LIMPIEZA Y TRANSFORMACIÓN DE DATOS
+***
+
+Vamos a limpiar y transformar los datos. La verdad es que los datos que hemos descargado ya están bastante procesados: solo contamos con las 14 columnas que se consideran relevantes según los autores del data set en vez de las 75 originales, las variables que estaban como texto (sex, por ejmplo) ya cuentan con valores numéricos. Por lo que sobre todo trataremos los valores nulos del data set además de modificar los valores de una variable.
+
+```{r}
+
+# comprobamos si hay nulos
+# hay que tener en cuenta que a la hora de cargar los datos, hemos indicado que lea como valores nulos allí donde aparezca "?"
+colSums(is.na(heartData)) 
+
+# comprobamos cuántos objetos no tienen ningún nulo
+heartCompleto <- heartData[complete.cases(heartData), ]
+
+# eliminamos la variable ca
+heartData <- heartData[,-12]
+
+# eliminamos las filas que tienen valores nulos en trestbps, thalach, exang y oldpeak
+heartData <- heartData[!is.na(heartData$trestbps),]
+heartData <- heartData[!is.na(heartData$thalach),]
+heartData <- heartData[!is.na(heartData$exang),]
+heartData <- heartData[!is.na(heartData$oldpeak),]
+
+# eliminamos restecg, chol y fbs
+heartData <- heartData[!is.na(heartData$restecg),]
+heartData <- heartData[!is.na(heartData$chol),]
+heartData <- heartData[!is.na(heartData$fbs),]
+
+# damos un valor a los nulos
+heartData$slope[is.na(heartData$slope)] <- 4 # 4 =  categoría para valores desconocidos
+heartData$thal[is.na(heartData$thal)] <- 4
+
+# reordenamos las filas
+row.names(heartData) <- 1:nrow(heartData)
+
+# los valores 2, 3 y 4 de la columa goal, pasarán a ser 1: enfermo
+heartData$goal[heartData$goal == 2] <- 1
+heartData$goal[heartData$goal == 3] <- 1
+heartData$goal[heartData$goal == 4] <- 1
+
+```
+
+Lo primero que hemos hecho ha sido limpiar los valores nulos. Tenemos un total de 920 observaciones y 1.759 valores nulos de un total de 12.880 valores. Cuando observamos cuántos nulos hay por variable, vemos que hay tres variables que destacan bastante sobre el resto:
+- slope: 309 nulos; esto supone un 33% de valores nulos.
+- ca: 611 nulos; esto supone un 66% de valores nulos.
+- thal: 486 nulos; esto supone un 52% de valores nulos.
+
+Comprobamos cuántos objetos tienen todos los valores y vemos que solo hay 299, por lo que optar por quitar todos los nulos nos quedaría con pocos observaciones para realizar el estudios. Optamos entonces por otras alternativas.
+Como la variable ca tiene un 66% de sus valores nulos, la eliminamos del data frame, puesto que no la consideramos determinante para los resultados del estudio.
+
+Vemos que trestbps, thalach, exang y oldpeak tienengit sat valores aparecen como nulos práctimaente en las mismas observaciones. Así pues, también hemos optado por eliminar estos valores nulos. Estos datos representan el 8% de los datos. Después de investigar un poco, pudimos ver que estas variables hacen referencia a los parámetros que se analizan en una prueba de esfuerzo específica que se hace a los pacientes en estas situaciones (Exercise stress test, Harvard Health Publishing 2010) por lo que podemos deducir que estos pacientes no fueron sometidos a estos test.
+
+La variable restcg solo cuanta con dos nulos, por lo que podemos eliminarlos también.
+
+Puesto que fbs es una variable boleana, vamos a eliminar los nulos que contenga.
+
+También eliminamos la vairable chol.
+
+Para slope y thal, que suponían un 33% y un 52% respectivamente. Estos datos ya han sido procesados, incialmente, estos dos variables eran categóricas, teniendo los siguiente valores: 
+- slope: downsloping, flat y upsloping
+- thal: fixed effect, normal, reversible defect
+Pues que estas variables ya están factorizadas en estos datos, vamos a tomar los nulos como si fueran datos desconocidos y les vamos a identificar con 4, como si fuera una categoría más.
+
+Finalmente, en la variable goal, la que determina si el paciente va a tener o no enfermedad cardíaca, vemos que hay cuatro valores, que indican el grado de enfermedad. Nosotros, realmente, lo que queremos es un valor boleano que nos indique si lo está o no, ignorando el grado. Es por eso que los valores 2, 3 y 4 pasarán a ser 1. Se queda entonces que 1 determina aquellos pacientes que sufren una enfermedad cardíaca mientras que 0 determina aquellos que no.
+
+Finalmente, nos quedamos con 740 obervaciones y 13 columnas. Los datos se han reducido en un 20%.
+
+***
+# EXPLORACIÓN DE LOS DATOS
+***
+
