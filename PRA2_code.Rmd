@@ -160,6 +160,8 @@ Finalmente, nos quedamos con 740 obervaciones y 13 columnas. Los datos se han re
 # EXPLORACIÓN DE LOS DATOS
 ***
 
+## Valores atípicos
+
 Vamos a tratar ahora los valores atípicos del data set. Para ello, realizaremos diferentes diagramas de cajas y bigotes para localizar dichos valores en las variables numéricas.
 
 ```{r}
@@ -167,10 +169,10 @@ Vamos a tratar ahora los valores atípicos del data set. Para ello, realizaremos
 require(reshape2)
 require(ggplot2)
 # dejamos de lado el resto de variables, ya que se tratan de variables categóricas y nos centramos en las numéricas
-ourlitersdata <- melt(heartData[-c(2,3,6,7,9,11:13)])
+meltedData <- melt(heartData[-c(2,3,6,7,9,11:13)])
 
 # mostramos los distintos diagramas en un solo plot
-p <- ggplot(data = ourlitersdata, aes(x=variable, y=value)) + 
+p <- ggplot(data = meltedData, aes(x=variable, y=value)) + 
              geom_boxplot()
 p + facet_grid( ~ variable, scales="free")
 
@@ -178,3 +180,72 @@ p + facet_grid( ~ variable, scales="free")
 ```
 
 Al analizar el resultado, vemos que no nos encontramos con muchos valores atípicos en ninguna variable a excepción de chol y, en menos medida, trestbps. En este caso, no vamos a tratar estos valores ni imputándolos ni borrándolos de juego de datos, vamos a dejarlos tal cual. Esta decisión se debe a que los valores, aunque atípicos dentro de este juego de datos, no lo son a la hora de analizar las enfermedades cardiovasculares. Es decir, es posible encontrar un paciente que tenga > 400 de colesterol. Quitar estos valores, podría generar una pérdida importante de la información de cara al estudio de estas enfermedades.
+
+
+***
+# ANÁLISIS DE LOS DATOS
+***
+
+# Análisi de la normalidad y homogeneidad de la varianza
+
+```{r}
+
+require(gridExtra)
+
+p1 <- ggplot(data=heartData, aes(x=age)) +
+    geom_density(color="grey33", fill="dodgerblue", alpha=0.4)
+
+p2 <- ggplot(data=heartData, aes(x=trestbps)) +
+    geom_density(color="grey33", fill="pink1", alpha=0.4)
+
+p3 <- ggplot(data=heartData, aes(x=chol)) +
+    geom_density(color="grey33", fill="seagreen", alpha=0.4)
+
+p4 <- ggplot(data=heartData, aes(x=thalach)) +
+    geom_density(color="grey33", fill="red", alpha=0.4)
+
+p5 <- ggplot(data=heartData, aes(x=oldpeak)) +
+    geom_density(color="grey33", fill="yellow", alpha=0.4)
+
+
+grid.arrange(p1, p2, p3, p4, p5)
+
+```
+
+```{r}
+
+require(c(ggpubr, gridExtra))
+
+
+p6 <-  ggqqplot(heartData$age)
+p7 <-  ggqqplot(heartData$trestbps)
+p8 <-  ggqqplot(heartData$chol)
+p9 <-  ggqqplot(heartData$thalach)
+p10 <- ggqqplot(heartData$oldpeak)
+
+grid.arrange(p6, p7, p8, p9, p10)
+
+```
+
+
+## Homogenedidad
+
+## Aplicación de pruebas estadísticas
+
+Vamos a usar tres funciones diferentes: - rcorr: nos devolverá una lista con los siguentes elementos: - r: la matriz de correlación - n: una matriz que nos muestra el número de observaciones usadas para analizar cada par de variables - p: los p-valores correspondientes al los niveles de significación de correlación
+
+corrplot: nos va a permitir visualizar gráficamente la matriz de correlaciones:
+las correlaciones positivas aparecen representadas en azul y las correlaciones negativas en rojo; las insignificantes aparecen en blanco. La intensidad del color y el tamaño del círculo son proporcionales a los coeficientes de correlación.
+
+```{r}
+
+require(corrplot)
+
+# usamos la función corrplot para la visualización de la matriz de relaciones
+# antes necesitamos tener nuestro data ser como una matriz de correlaciones, usamos la función cor
+heartData_cor = cor(heartData,method = c("spearman"))
+corrplot(heartData_cor, type = "upper", order = "hclust", tl.col = "black", tl.srt = 60)
+
+```
+
+Podemos observar que no hay mucha correlación entre las variables. Thalach tiende a mostrar una correlación negativa con el resto de variables. La mayor correlación la encontramos entre goal y cp, goal y exang y goal y oldpeak.
