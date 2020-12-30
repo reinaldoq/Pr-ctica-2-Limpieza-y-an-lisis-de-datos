@@ -83,6 +83,7 @@ names(heartData) <- c("age","sex","cp","trestbps","chol","fbs","restecg","thalac
 
 str(heartData)
 summary(heartData)
+sapply(heartData, class)
 
 ```
 
@@ -159,3 +160,21 @@ Finalmente, nos quedamos con 740 obervaciones y 13 columnas. Los datos se han re
 # EXPLORACIÓN DE LOS DATOS
 ***
 
+Vamos a tratar ahora los valores atípicos del data set. Para ello, realizaremos diferentes diagramas de cajas y bigotes para localizar dichos valores en las variables numéricas.
+
+```{r}
+
+require(reshape2)
+require(ggplot2)
+# dejamos de lado el resto de variables, ya que se tratan de variables categóricas y nos centramos en las numéricas
+ourlitersdata <- melt(heartData[-c(2,3,6,7,9,11:13)])
+
+# mostramos los distintos diagramas en un solo plot
+p <- ggplot(data = ourlitersdata, aes(x=variable, y=value)) + 
+             geom_boxplot()
+p + facet_grid( ~ variable, scales="free")
+
+
+```
+
+Al analizar el resultado, vemos que no nos encontramos con muchos valores atípicos en ninguna variable a excepción de chol y, en menos medida, trestbps. En este caso, no vamos a tratar estos valores ni imputándolos ni borrándolos de juego de datos, vamos a dejarlos tal cual. Esta decisión se debe a que los valores, aunque atípicos dentro de este juego de datos, no lo son a la hora de analizar las enfermedades cardiovasculares. Es decir, es posible encontrar un paciente que tenga > 400 de colesterol. Quitar estos valores, podría generar una pérdida importante de la información de cara al estudio de estas enfermedades.
