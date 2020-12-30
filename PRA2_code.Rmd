@@ -249,3 +249,24 @@ corrplot(heartData_cor, type = "upper", order = "hclust", tl.col = "black", tl.s
 ```
 
 Podemos observar que no hay mucha correlación entre las variables. Thalach tiende a mostrar una correlación negativa con el resto de variables. La mayor correlación la encontramos entre goal y cp, goal y exang y goal y oldpeak.
+
+
+## Regresión lineal
+
+```{r}
+
+attach(heartData)
+
+modelLineal <- lm(goal~age+sex+cp+oldpeak+exang+thalach,data = heartData,family = binomial)
+summary(modelLineal)
+
+predicciones <- ifelse(test = modelLineal$fitted.values > 0.5, yes = "Yes", no = "No")
+matriz_confusion <- table(modelLineal$model$goal , predicciones,
+                          dnn = c("observaciones", "predicciones"))
+matriz_confusion
+
+```
+En el 0: el modelo acierta 290 de 357
+En el 1: el modelo acierta 306 de 383
+
+Un acierto del 80 %.
