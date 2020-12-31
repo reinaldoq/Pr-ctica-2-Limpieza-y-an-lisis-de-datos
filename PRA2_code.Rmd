@@ -226,6 +226,7 @@ Ahora nuetro dataset es mas comprensible y las columnas tienen el tipo correcto,
 library(tidyverse) 
 
 glimpse(heartData)
+
 ```
 
 
@@ -247,14 +248,22 @@ require(ggplot2)
 meltedData <- melt(heartData[-c(2,3,6,7,9,11:13)])
 
 # mostramos los distintos diagramas en un solo plot
-p <- ggplot(data = meltedData, aes(x=variable, y=value)) + 
-             geom_boxplot()
+p <- ggplot(data = meltedData, aes(x=variable, y=value, fill=variable)) + 
+             geom_boxplot()+
+             theme_minimal()
 p + facet_grid( ~ variable, scales="free")
-
 
 ```
 
 Al analizar el resultado, vemos que no nos encontramos con muchos valores atípicos en ninguna variable a excepción de chol y, en menos medida, trestbps. En este caso, no vamos a tratar estos valores ni imputándolos ni borrándolos de juego de datos, vamos a dejarlos tal cual. Esta decisión se debe a que los valores, aunque atípicos dentro de este juego de datos, no lo son a la hora de analizar las enfermedades cardiovasculares. Es decir, es posible encontrar un paciente que tenga > 400 de colesterol. Quitar estos valores, podría generar una pérdida importante de la información de cara al estudio de estas enfermedades.
+
+Vamos a extraer este juego de datos a csv:
+```{r}
+
+write.csv(heartData, "heartData_clean.csv")
+
+```
+
 
 Ahora que dispoemos de datos limpios con los que trabajar nos disponemos a extraer informacion relevante sobre el comportamiento de las variables.
 
@@ -295,8 +304,12 @@ Son oldpea, thalach y chol las vriables que si parecieran mostrar diferencias en
 
 
 ```{r}
+
 heartData %>%
-  ggplot(aes(as.factor(goal), age ,fill = as.factor(goal), color = as.factor(goal))) + geom_boxplot(alpha = 0.65)
+  ggplot(aes(as.factor(goal), age ,fill = as.factor(goal))) +
+    scale_x_discrete("Enfermedad")+
+    scale_fill_manual(name = "Enfermedad", labels = c("Ausencia", "Presencia"),values = c("steelblue1", "darkorange1"))+
+    geom_boxplot(alpha = 0.65)
 
 ```
 
@@ -304,12 +317,14 @@ Para comprobar las sospechas que tenemos sobre que no tenemos diferencias en la 
 
 
 ```{r}
+
 heartData  %>%
-  ggplot(aes(x = as.factor(goal), fill = sex, color = sex)) + geom_bar(show.legend = T) + 
+  ggplot(aes(x = as.factor(goal), fill = sex, color = sex)) + geom_bar(show.legend = T) +
   facet_wrap(~sex) +
   theme_minimal() + 
   ylab("Frecuencia") +
   xlab("")
+
 ```
 
 Otro insight interesante que podemos obtener a partir del analisis preliminar de los datos es que en la muestra las mujeres parecen tener una diferencia significativa en cuanto a la presencia de enfermedades cardiacas en comparacion a los hombres. Es importante mencionar tambien que para este estudio se tienen menos observaciones de mujeres que de hombres.
@@ -324,19 +339,19 @@ Otro insight interesante que podemos obtener a partir del analisis preliminar de
 
 require(gridExtra)
 
-p1 <- ggplot(data=heartData, aes(x=age)) +
+p1 <- ggplot(data=heartData_num, aes(x=age)) +
     geom_density(color="grey33", fill="dodgerblue", alpha=0.4)
 
-p2 <- ggplot(data=heartData, aes(x=trestbps)) +
+p2 <- ggplot(data=heartData_num, aes(x=trestbps)) +
     geom_density(color="grey33", fill="pink1", alpha=0.4)
 
-p3 <- ggplot(data=heartData, aes(x=chol)) +
+p3 <- ggplot(data=heartData_num, aes(x=chol)) +
     geom_density(color="grey33", fill="seagreen", alpha=0.4)
 
-p4 <- ggplot(data=heartData, aes(x=thalach)) +
+p4 <- ggplot(data=heartData_num, aes(x=thalach)) +
     geom_density(color="grey33", fill="red", alpha=0.4)
 
-p5 <- ggplot(data=heartData, aes(x=oldpeak)) +
+p5 <- ggplot(data=heartData_num, aes(x=oldpeak)) +
     geom_density(color="grey33", fill="yellow", alpha=0.4)
 
 
@@ -350,20 +365,37 @@ require(ggpubr)
 require(gridExtra)
 
 
-p6 <-  ggqqplot(heartData$age)
-p7 <-  ggqqplot(heartData$trestbps)
-p8 <-  ggqqplot(heartData$chol)
-p9 <-  ggqqplot(heartData$thalach)
-p10 <- ggqqplot(heartData$oldpeak)
+p6 <-  ggqqplot(heartData_num$age)
+p7 <-  ggqqplot(heartData_num$trestbps)
+p8 <-  ggqqplot(heartData_num$chol)
+p9 <-  ggqqplot(heartData_num$thalach)
+p10 <- ggqqplot(heartData_num$oldpeak)
 
 grid.arrange(p6, p7, p8, p9, p10)
 
 ```
 
+Como podemos ver por el análisi visual que nos ofrecen los gráficos de densisdad y los gráficos Q-Q, todas las variables numéricas siguen una distribución normal. Si bien se aprecian valores que se desvían, esto no es suficiente para descartar la hipótesis de normalidad.
 
-## Homogenedidad
+Para comprobar la homegenidad de las variables, vamos a realizar un análisis anova.
+```{r}
 
-## Aplicación de pruebas estadísticas
+modelAnova <- aov(goal ~ oldpeak * thalach , data = heartData_num)
+summary(modelAnova)
+
+```
+
+
+
+# Aplicación de pruebas estadísticas y métodos de análisis estadísticos
+
+Vamos a realizar tres métodos de análisis estadísticos. 
+En primer lugar, vamos a realizar una matriz de correlación que nos permitirá ver la relación que guardan las variables entre sí.
+Luego, realizaremos un modelo de regresión lineal que nos permitirá poder predecir si los pacientes desarrollarán o no una enfermedad cardiovascular. y comprobaremos su eficiencia.
+En tercer lugar, pondremos en práctica un árbol de decisión. Este nos permitirá ver qué variables son las más representatativas a la hora de determinar la presencia de una enfermedad en el paciente.
+Finalmente, haremos un K-means.
+
+## Correlación
 
 Vamos a usar tres funciones diferentes: - rcorr: nos devolverá una lista con los siguentes elementos: - r: la matriz de correlación - n: una matriz que nos muestra el número de observaciones usadas para analizar cada par de variables - p: los p-valores correspondientes al los niveles de significación de correlación
 
@@ -386,12 +418,18 @@ Podemos observar que no hay mucha correlación entre las variables. Thalach tien
 
 ## Regresión lineal
 
+Vamos a realizar un modelo de regresión lineal que nos permitirá predecir si un paciente tendrá o no una enfermedad cardiovascular. Para realizar dicho modelo, usaremos las variables que más correlación guardan entre ellas.
 ```{r}
 
 attach(heartData)
 
 modelLineal <- lm(goal~age+sex+cp+oldpeak+exang+thalach,data = heartData_num,family = binomial)
 summary(modelLineal)
+
+```
+
+Comprobamos la eficiencia del modelo.
+```{r}
 
 predicciones <- ifelse(test = modelLineal$fitted.values > 0.5, yes = "Yes", no = "No")
 matriz_confusion <- table(modelLineal$model$goal , predicciones,
@@ -403,3 +441,83 @@ En el 0: el modelo acierta 290 de 357
 En el 1: el modelo acierta 306 de 383
 
 Un acierto del 80 %.
+
+Ahora, podríamos usar este modelo para predecir si el paciente tendrá o no una enfermedad cardiovascular:
+```{r}
+
+#▲ creamos un nuevo data frame con las caracterísitcas de un paciente imaginario
+newdata <- data.frame(
+    age = 61,
+    sex = 1,
+    cp = 2,
+    oldpeak = 3.5,
+    exang = 1,
+    thalach = 147)
+
+# Predecir si tendrá una enfermedad o no
+predict(modelLineal, newdata)
+
+```
+
+Según nuestro modelo, la probabilidad de que el paciente caiga enfermo es del 80,50 %.
+
+
+# Árbol de decisión
+
+Para crear el árbol de decisión, primero tenemos que separar lo datos en train y test, con una proporción 70:30.
+```{r}
+
+require(caTools)
+
+# vamos a poner la seed
+set.seed(120)
+# usamos la función sample.split para separar los valores. El SplitRatio nos permite separar los valores en 70-30.
+sampleValue = sample.split(heartData_num,SplitRatio=0.7) 
+heartTrain = subset(heartData_num, sampleValue == TRUE)
+heartTest = subset(heartData_num, sampleValue == FALSE)
+
+as.data.frame(table(heartTrain$goal))
+as.data.frame(table(heartTest$goal))
+
+```
+
+Comprobamos que los datos están bien distribuídos: 
+Hay un total de 740 observaciones: 
+    0 → 357 observaciones (48,25 %)
+    1 → 383 observaciones (51,75 %)
+
+En la variable heartTrain tenemos 512 observaciones, lo que suponene 69,18 % de los datos:
+    0 → 251 observaciones (49,02 %)
+    1 → 261 observaciones (50,98 %)
+
+En la variable heartTest tenemos 228 observaciones, lo que suponene 30,82 % de los datos:
+    0 → 106 observaciones (46,50 %)
+    1 → 122 observaciones (53,50 %)
+
+Los datos están, por lo tanto, bien divididos. Podemos pasar a crear el modelo:
+```{r}
+
+require(rpart)
+require(rpart.plot)
+
+modelR <- rpart(formula = goal ~ ., data = heartTrain)
+rpart.rules(modelR, style = "tallw", cover = TRUE)
+
+```
+
+```{r}
+
+modelR
+
+```
+
+Lo visualizamos gráficamente;
+```{r}
+
+require(rattle)
+
+fancyRpartPlot(modelR, main = "Árbol de decición", caption = " ", palettes = "Oranges", type = 3)
+
+```
+
+Podemos sacar algunas conclusiones: la variable exang es la más significativa a la hora de decidir en qué grupo estará cada observación. POr lo tnato, la primera partición se hará en función de exang, dependiendo de si es 0 o 1. La regla que cubre el 40 % de los casos, siendo así la más relevante, determina si un paciente tendrá o no una enfermedad cardíaca basándose en esta primera partición de exang, que para este caso, será igual a 0 y en los valores de thal, chol y oldpeak. Esta regla nos dice que la probabilidad de que las muestras que cumplen esas condiciones comentandas tenga una enfermedad cardiaca es del 15 %. Por lo tanto, el 85 % no sufrirá una enfermedad cardíaca. Como segunda más relevante, tenemos la contraparte del valor de exang. Cuando este es 1, y además el cp está por encima de 0.83, entonces el paciente tendrá una enfermedad cardíaca. Esta regla cubre el 33 % de los casos. La probablidad de que, cumpliendo con estos parámetros, se sufra una enfermedad cardíaca es del 88 %. Con estas dos reglas, tendríamos identificadas casi tres cuartas partes de todas las observaciones. También contamos con otras reglas para casos más excepcionales. Por ejemplo, en el caso de la primera regla, en las situaciones en las que thal está por encima de 0.5, tenemos otra regla que recoge el 10 % de los casos y se fija en el valor de cp. Contamos con otras reglas que cubrirían los casos restantes, solo en torno a un 4 % de las muestras. La regla que determina con más seguridad, 92 %, que el paciente va a sufrir una enfermedad cardíaca, es aquella en la que exang tiene valor de 1, cp está por debajo de 0.83 y el thalach por debajo de 0.42. Sin emabargo, esta regla solo cubre el 3 % de los casos.
