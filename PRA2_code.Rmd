@@ -129,6 +129,8 @@ heartData$goal[heartData$goal == 2] <- 1
 heartData$goal[heartData$goal == 3] <- 1
 heartData$goal[heartData$goal == 4] <- 1
 
+
+
 ```
 
 Lo primero que hemos hecho ha sido limpiar los valores nulos. Tenemos un total de 920 observaciones y 1.759 valores nulos de un total de 12.880 valores. Cuando observamos cuántos nulos hay por variable, vemos que hay tres variables que destacan bastante sobre el resto:
@@ -155,6 +157,79 @@ Pues que estas variables ya están factorizadas en estos datos, vamos a tomar lo
 Finalmente, en la variable goal, la que determina si el paciente va a tener o no enfermedad cardíaca, vemos que hay cuatro valores, que indican el grado de enfermedad. Nosotros, realmente, lo que queremos es un valor boleano que nos indique si lo está o no, ignorando el grado. Es por eso que los valores 2, 3 y 4 pasarán a ser 1. Se queda entonces que 1 determina aquellos pacientes que sufren una enfermedad cardíaca mientras que 0 determina aquellos que no.
 
 Finalmente, nos quedamos con 740 obervaciones y 13 columnas. Los datos se han reducido en un 20%.
+
+Ahora aplicaremos algunas trasnformaciones adicionales pero necesarias a los datos.
+
+Reemplazamos las variables categoricas por su significado.
+
+
+```{r}
+
+# Preservamos el dataset sin transformar para anlisis posteriores que requieran variables numericas.
+
+heartData_num <- heartData
+
+# Realizamos la transformacion
+
+heartData$cp <- replace(heartData$cp, heartData$cp =="1", "typical angina")
+heartData$cp <- replace(heartData$cp, heartData$cp =="2", "atypical angina")
+heartData$cp <- replace(heartData$cp, heartData$cp =="3", "non — anginal pain")
+heartData$cp <- replace(heartData$cp, heartData$cp =="4", "asymptotic")
+heartData$cp <- as.factor(heartData$cp)
+unique(heartData$cp)
+
+heartData$fbs <- replace(heartData$fbs, heartData$fbs =="1", "true")
+heartData$fbs <- replace(heartData$fbs, heartData$fbs =="0", "false")
+heartData$fbs <- as.factor(heartData$fbs)
+unique(heartData$fbs)
+
+heartData$restecg <- replace(heartData$restecg, heartData$restecg =="0", "normal")
+heartData$restecg <- replace(heartData$restecg, heartData$restecg =="1", " having ST-T wave abnormality")
+heartData$restecg <- replace(heartData$restecg, heartData$restecg =="2", "eft ventricular hyperthrophy")
+heartData$restecg <- as.factor(heartData$restecg)
+unique(heartData$restecg)
+
+heartData$exang <- replace(heartData$exang, heartData$exang =="1", "Yes")
+heartData$exang <- replace(heartData$exang, heartData$exang =="0", "No")
+heartData$exang <- as.factor(heartData$exang)
+unique(heartData$exang)
+
+heartData$slope <- replace(heartData$slope, heartData$slope =="1", "upsloping")
+heartData$slope <- replace(heartData$slope, heartData$slope =="2", "flat")
+heartData$slope <- replace(heartData$slope, heartData$slope =="3", "downsloping")
+heartData$slope <- as.factor(heartData$slope)
+unique(heartData$slope)
+
+heartData$thal <- replace(heartData$thal, heartData$thal =="3", "normal")
+heartData$thal <- replace(heartData$thal, heartData$thal =="6", "fixed defect")
+heartData$thal <- replace(heartData$thal, heartData$thal =="7", "reversible defect")
+heartData$thal <- as.factor(heartData$thal)
+unique(heartData$thal)
+
+heartData$goal <- replace(heartData$goal, heartData$goal =="0", "Ausencia")
+heartData$goal <- replace(heartData$goal, heartData$goal =="1", "Presencia")
+heartData$goal <- as.factor(heartData$goal)
+unique(heartData$goal)
+
+heartData$sex <- replace(heartData$sex, heartData$sex =="0", "Male")
+heartData$sex <- replace(heartData$sex, heartData$sex =="1", "Female")
+heartData$sex <- as.factor(heartData$sex)
+unique(heartData$sex)
+
+# Fuente de las categorias https://towardsdatascience.com/heart-disease-prediction-73468d630cfc
+
+```
+
+Ahora nuetro dataset es mas comprensible y las columnas tienen el tipo correcto, factor o double, segun corresponde.
+
+```{r}
+library(tidyverse) 
+
+glimpse(heartData)
+```
+
+
+
 
 ***
 # EXPLORACIÓN DE LOS DATOS
@@ -183,7 +258,7 @@ Al analizar el resultado, vemos que no nos encontramos con muchos valores atípi
 
 Ahora que dispoemos de datos limpios con los que trabajar nos disponemos a extraer informacion relevante sobre el comportamiento de las variables.
 
-En la tabla siguiente tomamos en consideracion todas las variables continuas que disponemos para explorar hacia que grupo de num se decantan.
+En la tabla siguiente tomamos en consideracion todas las variables continuas que disponemos para explorar hacia que grupo de goal se decantan.
 
 En primer lugar, podemos notar que la muestra se encuentra dividida con bastante equidad entre las personas que presentan enfermedad y las que no.
 
@@ -191,10 +266,6 @@ La edad que a priori pensamos que seria una variable clave no muestra especial i
 
 Son oldpea y ca las vriables que si parecieran mostrar diferencias entre un grupo y otro.
 
-```{r}
-glimpse(heartData)
-
-```
 
 
 ```{r}
@@ -214,8 +285,34 @@ heartData %>%
 
 ```
 
+En la tabla de medias tomamos en consideracion todas las variables continuas que disponemos para explorar hacia que grupo de goal se decantan.
+
+En primer lugar, podemos notar que la muestra se encuentra dividida con bastante equidad entre las personas que presentan enfermedad y las que no.
+
+La edad que a priori pensamos que seria una variable clave no muestra especial inclinacion hacia un grupo u otro.
+
+Son oldpea, thalach y chol las vriables que si parecieran mostrar diferencias entre un grupo y otro.
 
 
+```{r}
+heartData %>%
+  ggplot(aes(as.factor(goal), age ,fill = as.factor(goal), color = as.factor(goal))) + geom_boxplot(alpha = 0.65)
+
+```
+
+Para comprobar las sospechas que tenemos sobre que no tenemos diferencias en la edad creamos un boxplot donde corroboramos que efectivamente esa diferencia no es asentuada, solo una pequena tendencia a la alza en el grupo que presenta enfermedades cardiacas.
+
+
+```{r}
+heartData  %>%
+  ggplot(aes(x = as.factor(goal), fill = sex, color = sex)) + geom_bar(show.legend = T) + 
+  facet_wrap(~sex) +
+  theme_minimal() + 
+  ylab("Frecuencia") +
+  xlab("")
+```
+
+Otro insight interesante que podemos obtener a partir del analisis preliminar de los datos es que en la muestra las mujeres parecen tener una diferencia significativa en cuanto a la presencia de enfermedades cardiacas en comparacion a los hombres. Es importante mencionar tambien que para este estudio se tienen menos observaciones de mujeres que de hombres.
 
 ***
 # ANÁLISIS DE LOS DATOS
@@ -249,7 +346,8 @@ grid.arrange(p1, p2, p3, p4, p5)
 
 ```{r}
 
-require(c(ggpubr, gridExtra))
+require(ggpubr)
+require(gridExtra)
 
 
 p6 <-  ggqqplot(heartData$age)
@@ -278,7 +376,7 @@ require(corrplot)
 
 # usamos la función corrplot para la visualización de la matriz de relaciones
 # antes necesitamos tener nuestro data ser como una matriz de correlaciones, usamos la función cor
-heartData_cor = cor(heartData,method = c("spearman"))
+heartData_cor = cor(heartData_num,method = c("spearman"))
 corrplot(heartData_cor, type = "upper", order = "hclust", tl.col = "black", tl.srt = 60)
 
 ```
@@ -292,7 +390,7 @@ Podemos observar que no hay mucha correlación entre las variables. Thalach tien
 
 attach(heartData)
 
-modelLineal <- lm(goal~age+sex+cp+oldpeak+exang+thalach,data = heartData,family = binomial)
+modelLineal <- lm(goal~age+sex+cp+oldpeak+exang+thalach,data = heartData_num,family = binomial)
 summary(modelLineal)
 
 predicciones <- ifelse(test = modelLineal$fitted.values > 0.5, yes = "Yes", no = "No")
