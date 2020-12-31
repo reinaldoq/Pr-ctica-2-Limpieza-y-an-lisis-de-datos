@@ -39,7 +39,7 @@ El conjunto de datos Utilizado cuenta con las siguientes variables:
 -- Value 3: downsloping
 12. (ca) number of major vessels (0-3) colored by flourosopy
 13. (thal) 3 = normal; 6 = fixed defect; 7 = reversable defect
-14. (num) (the predicted attribute) diagnosis of heart disease (angiographic disease status)
+14. (goal) (the predicted attribute) diagnosis of heart disease (angiographic disease status)
 -- Value 0: < 50% diameter narrowing
 -- Value 1: > 50% diameter narrowing
 (in any major vessel: attributes 59 through 68 are vessels)
@@ -180,6 +180,41 @@ p + facet_grid( ~ variable, scales="free")
 ```
 
 Al analizar el resultado, vemos que no nos encontramos con muchos valores atípicos en ninguna variable a excepción de chol y, en menos medida, trestbps. En este caso, no vamos a tratar estos valores ni imputándolos ni borrándolos de juego de datos, vamos a dejarlos tal cual. Esta decisión se debe a que los valores, aunque atípicos dentro de este juego de datos, no lo son a la hora de analizar las enfermedades cardiovasculares. Es decir, es posible encontrar un paciente que tenga > 400 de colesterol. Quitar estos valores, podría generar una pérdida importante de la información de cara al estudio de estas enfermedades.
+
+Ahora que dispoemos de datos limpios con los que trabajar nos disponemos a extraer informacion relevante sobre el comportamiento de las variables.
+
+En la tabla siguiente tomamos en consideracion todas las variables continuas que disponemos para explorar hacia que grupo de num se decantan.
+
+En primer lugar, podemos notar que la muestra se encuentra dividida con bastante equidad entre las personas que presentan enfermedad y las que no.
+
+La edad que a priori pensamos que seria una variable clave no muestra especial inclinacion hacia un grupo u otro.
+
+Son oldpea y ca las vriables que si parecieran mostrar diferencias entre un grupo y otro.
+
+```{r}
+glimpse(heartData)
+
+```
+
+
+```{r}
+require(dplyr)
+
+summarise(heartData)
+
+heartData %>%
+    group_by(goal) %>%
+    summarise(Count = n(),
+            age_mean = round(x = mean(age), 2),
+            trestbps_mean = round(x = mean(trestbps), 2),
+            chol_mean = round(x = mean(chol), 2),
+            thalach_mean = round(x = mean(thalach), 2),
+            oldpeak_mean = round(x = mean(oldpeak), 2),
+            ) %>% t()
+
+```
+
+
 
 
 ***
