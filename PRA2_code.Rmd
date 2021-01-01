@@ -62,7 +62,8 @@ longbeach <- read.csv('https://archive.ics.uci.edu/ml/machine-learning-databases
 heartData <- rbind(cleveland,hungarian,switzer,longbeach)
 names(heartData) <- c("age","sex","cp","trestbps","chol","fbs","restecg","thalach","exang","oldpeak","slope","ca","thal","goal")
 
-#View(heartData)
+# Exportamos las datos 
+write.csv(heartData, "heartData_original.csv")
 
 # analizamos los datos que tenemos
 
@@ -230,8 +231,6 @@ glimpse(heartData)
 ```
 
 
-
-
 ***
 # EXPLORACIÓN DE LOS DATOS
 ***
@@ -385,7 +384,7 @@ summary(modelAnova)
 
 ```
 
-
+En este caso se comprueba la homegeniedad de las vrianzas de las varibales del modelo.
 
 # Aplicación de pruebas estadísticas y métodos de análisis estadísticos
 
@@ -520,4 +519,118 @@ fancyRpartPlot(modelR, main = "Árbol de decición", caption = " ", palettes = "
 
 ```
 
-Podemos sacar algunas conclusiones: la variable exang es la más significativa a la hora de decidir en qué grupo estará cada observación. POr lo tnato, la primera partición se hará en función de exang, dependiendo de si es 0 o 1. La regla que cubre el 40 % de los casos, siendo así la más relevante, determina si un paciente tendrá o no una enfermedad cardíaca basándose en esta primera partición de exang, que para este caso, será igual a 0 y en los valores de thal, chol y oldpeak. Esta regla nos dice que la probabilidad de que las muestras que cumplen esas condiciones comentandas tenga una enfermedad cardiaca es del 15 %. Por lo tanto, el 85 % no sufrirá una enfermedad cardíaca. Como segunda más relevante, tenemos la contraparte del valor de exang. Cuando este es 1, y además el cp está por encima de 0.83, entonces el paciente tendrá una enfermedad cardíaca. Esta regla cubre el 33 % de los casos. La probablidad de que, cumpliendo con estos parámetros, se sufra una enfermedad cardíaca es del 88 %. Con estas dos reglas, tendríamos identificadas casi tres cuartas partes de todas las observaciones. También contamos con otras reglas para casos más excepcionales. Por ejemplo, en el caso de la primera regla, en las situaciones en las que thal está por encima de 0.5, tenemos otra regla que recoge el 10 % de los casos y se fija en el valor de cp. Contamos con otras reglas que cubrirían los casos restantes, solo en torno a un 4 % de las muestras. La regla que determina con más seguridad, 92 %, que el paciente va a sufrir una enfermedad cardíaca, es aquella en la que exang tiene valor de 1, cp está por debajo de 0.83 y el thalach por debajo de 0.42. Sin emabargo, esta regla solo cubre el 3 % de los casos.
+Podemos sacar algunas conclusiones: la variable exang es la más significativa a la hora de decidir en qué grupo estará cada observación. Por lo tnato, la primera partición se hará en función de exang, dependiendo de si es 0 o 1. La regla que cubre el 40 % de los casos, siendo así la más relevante, determina si un paciente tendrá o no una enfermedad cardíaca basándose en esta primera partición de exang, que para este caso, será igual a 0 y en los valores de thal, chol y oldpeak. Esta regla nos dice que la probabilidad de que las muestras que cumplen esas condiciones comentandas tenga una enfermedad cardiaca es del 15 %. Por lo tanto, el 85 % no sufrirá una enfermedad cardíaca. Como segunda más relevante, tenemos la contraparte del valor de exang. Cuando este es 1, y además el cp está por encima de 0.83, entonces el paciente tendrá una enfermedad cardíaca. Esta regla cubre el 33 % de los casos. La probablidad de que, cumpliendo con estos parámetros, se sufra una enfermedad cardíaca es del 88 %. Con estas dos reglas, tendríamos identificadas casi tres cuartas partes de todas las observaciones. También contamos con otras reglas para casos más excepcionales. Por ejemplo, en el caso de la primera regla, en las situaciones en las que thal está por encima de 0.5, tenemos otra regla que recoge el 10 % de los casos y se fija en el valor de cp. Contamos con otras reglas que cubrirían los casos restantes, solo en torno a un 4 % de las muestras. La regla que determina con más seguridad, 92 %, que el paciente va a sufrir una enfermedad cardíaca, es aquella en la que exang tiene valor de 1, cp está por debajo de 0.83 y el thalach por debajo de 0.42. Sin emabargo, esta regla solo cubre el 3 % de los casos.
+
+# K-means
+
+Para poder generar un modelo que sea capaz de predecir la presencia o no de enfermedad debemos en primer lugar disponer del dataset sin la variable objetivo.
+
+```{r}
+library(cluster)
+library(dplyr)
+
+# Creamos un dataset unicamente con las variables numericas
+df_kmeans <- select_if(heartData, is.numeric)
+
+# Exportamos el dataset
+write.csv(df_kmeans, "heartData_num_kmenas.csv")
+
+```
+
+Como inicialmente no conocemos el número óptimo de clústers, probamos con varios valores, aunque esperamos que el valor optimo sea 5 ya que es las clases en las que originalmente viene dividido el dataset.
+
+```{r}
+d <- daisy(df_kmeans) 
+resultados <- rep(0, 10)
+for (i in c(2,3,4,5,6,7,8,9,10))
+{
+  fit           <- kmeans(df_kmeans, i)
+  y_cluster     <- fit$cluster
+  sk            <- silhouette(y_cluster, d)
+  resultados[i] <- mean(sk[,3])
+}
+```
+
+
+Mostramos en un gráfica los valores de las siluetas media de cada prueba para comprobar el mejor numero de cluster.
+
+```{r message= FALSE, warning=FALSE}
+plot(2:10,resultados[2:10],type="o",col="blue",pch=0,xlab="Número de clusters",ylab="Silueta")
+```
+Contrario a nuestras espectativas el mejor valor obtenido es k=2 y no k=5 como nos planteamos incialmente.
+
+Aplicamos analisis adicionales para determinar el k a usar.
+
+En primer lugar el metodo elbow:
+```{r message= FALSE, warning=FALSE}
+resultados <- rep(0, 10)
+for (i in c(2,3,4,5,6,7,8,9,10))
+{
+  fit           <- kmeans(df_kmeans, i)
+  resultados[i] <- fit$tot.withinss
+}
+plot(2:10,resultados[2:10],type="o",col="blue",pch=0,xlab="Número de clusters",ylab="tot.tot.withinss")
+```
+En este caso la curva comienza a estabilizarse en en 4 con los que k=4 seria el numero optimo segun este metodo.
+
+Ahora aplicamos la función kmeansruns del paquete fpc que ejecuta el algoritmo kmeans con un conjunto de valores, para después seleccionar el valor del número de clústers que mejor funcione de acuerdo a dos criterios: la silueta media ("asw") y Calinski-Harabasz ("ch").
+
+```{r message= FALSE, warning=FALSE}
+library(fpc)
+fit_ch  <- kmeansruns(df_kmeans, krange = 1:10, criterion = "ch") 
+fit_asw <- kmeansruns(df_kmeans, krange = 1:10, criterion = "asw") 
+```
+
+Podemos comprobar el valor con el que se ha obtenido el mejor resultado y también mostrar el resultado obtenido para todos los valores de k usando ambos criterios
+
+
+```{r message= FALSE, warning=FALSE}
+fit_ch$bestk
+fit_asw$bestk
+
+plot(1:10,fit_ch$crit,type="o",col="blue",pch=0,xlab="Número de clústers",ylab="Criterio Calinski-Harabasz")
+plot(1:10,fit_asw$crit,type="o",col="blue",pch=0,xlab="Número de clústers",ylab="Criterio silueta media")
+
+```
+
+Los resultados apuntan que en este caso el numero de clusters adecuado es k=2 que concuerda con nuestras categorias de presencia ausencia, lo que nos confirma que la decision de agrupar la variable goal en estas dos categorias fue acertada inicalmente.
+
+```{r message= FALSE, warning=FALSE}
+k2 <- kmeans(df_kmeans, centers = 2)
+k2
+str(k2)
+
+```
+
+El analsiis de kmeans nos permite observar que exister dos clusters claramente diferenciados que logran explicar el 59.9% de la varianza total del modelo. 
+
+Procedemos a representarlo graficamente para tener una mejor comprension de la clsificacion. 
+
+
+```{r message= FALSE, warning=FALSE}
+
+library("factoextra")
+
+fviz_cluster(k2, data = df_kmeans, ellipse.type = "euclid", repel = FALSE, star.plot = TRUE )
+
+```
+
+En el grafico podemos observar dos clusters diferenciados, esto nos da pistas sobre las variables que nos permita predecir adecuadamente la presencia o ausencia de enfermedad. 
+
+
+## Conclusiones
+
+Como se ha visto se ha visto inicialmente hemos procesado y limpiado un dataset que contiene data real y extensa sobre enfermdades cardiacas, hemos realizado un proceso de elmincacion de datos ausentes y consideracion de valores extremos. 
+
+Posteriormente condujios un analisis exploratorio de los datos que nos permitio tener una primera impresion de como se comportarian las variables y lo que podriamos esperar al conducir pruebas estadisticas. 
+
+En cuanto a las pruebas aplicadas, partimos de un regresion lineal que resulta util para conocer la relacion que existe entre las variables del modelo, luego elaboramos un arbol de decision que nos permitio geenrar reglas de comportamiento de las variables y asi poder conocer las condiciones que suceden en los distintos casos de la variables obetivo. 
+
+Finalmente aplicamos un analisis de k-means donde obtuvimos una agrupacion de las variables del modelos en funcion del efecto que tiene sobre la ausencia o presencia de enfermedad.
+
+Todos los analisis, desde el exploratorio al estadistico, permitieron tener una caracterizacion y comprension profunda de las variables que conforman el dataset de estudio.
+
+
+
+
+
