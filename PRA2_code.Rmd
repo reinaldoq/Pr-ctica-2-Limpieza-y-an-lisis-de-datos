@@ -1,8 +1,6 @@
 ---
 title: "R Notebook"
-output:
-  html_notebook: default
-  pdf_document: default
+output: 'md_document'
 ---
 
 
