@@ -264,17 +264,7 @@ write.csv(heartData, "heartData_clean.csv")
 ```
 
 
-Ahora que dispoemos de datos limpios con los que trabajar nos disponemos a extraer informacion relevante sobre el comportamiento de las variables.
-
-En la tabla siguiente tomamos en consideracion todas las variables continuas que disponemos para explorar hacia que grupo de goal se decantan.
-
-En primer lugar, podemos notar que la muestra se encuentra dividida con bastante equidad entre las personas que presentan enfermedad y las que no.
-
-La edad que a priori pensamos que seria una variable clave no muestra especial inclinacion hacia un grupo u otro.
-
-Son oldpea y ca las vriables que si parecieran mostrar diferencias entre un grupo y otro.
-
-
+Ahora que dispoemos de datos limpios con los que trabajar nos disponemos a extraer información relevante sobre el comportamiento de las variables.
 
 ```{r}
 require(dplyr)
@@ -299,7 +289,7 @@ En primer lugar, podemos notar que la muestra se encuentra dividida con bastante
 
 La edad que a priori pensamos que seria una variable clave no muestra especial inclinacion hacia un grupo u otro.
 
-Son oldpea, thalach y chol las vriables que si parecieran mostrar diferencias entre un grupo y otro.
+Son oldpea, thalach y chol las vriables que sí parecían mostrar diferencias entre un grupo y otro.
 
 
 ```{r}
@@ -312,7 +302,7 @@ heartData %>%
 
 ```
 
-Para comprobar las sospechas que tenemos sobre que no tenemos diferencias en la edad creamos un boxplot donde corroboramos que efectivamente esa diferencia no es asentuada, solo una pequena tendencia a la alza en el grupo que presenta enfermedades cardiacas.
+Para comprobar las sospechas que tenemos sobre que no tenemos diferencias en la edad creamos un boxplot donde corroboramos que efectivamente esa diferencia no es asentuada, solo una pequeña tendencia a la alza en el grupo que presenta enfermedades cardiacas.
 
 
 ```{r}
@@ -537,7 +527,7 @@ write.csv(df_kmeans, "heartData_num_kmenas.csv")
 
 ```
 
-Como inicialmente no conocemos el número óptimo de clústers, probamos con varios valores, aunque esperamos que el valor optimo sea 5 ya que es las clases en las que originalmente viene dividido el dataset.
+Como inicialmente no conocemos el número óptimo de clústers, probamos con varios valores, aunque esperamos que el valor óptimo sea 5 ya que es las clases en las que originalmente viene dividido el dataset.
 
 ```{r}
 d <- daisy(df_kmeans) 
@@ -561,7 +551,7 @@ Contrario a nuestras espectativas el mejor valor obtenido es k=2 y no k=5 como n
 
 Aplicamos analisis adicionales para determinar el k a usar.
 
-En primer lugar el metodo elbow:
+En primer lugar el método elbow:
 ```{r message= FALSE, warning=FALSE}
 resultados <- rep(0, 10)
 for (i in c(2,3,4,5,6,7,8,9,10))
@@ -602,14 +592,14 @@ str(k2)
 
 ```
 
-El analsiis de kmeans nos permite observar que exister dos clusters claramente diferenciados que logran explicar el 59.9% de la varianza total del modelo. 
+El análisis de kmeans nos permite observar que exister dos clusters claramente diferenciados que logran explicar el 59.9% de la varianza total del modelo. 
 
-Procedemos a representarlo graficamente para tener una mejor comprension de la clsificacion. 
+Procedemos a representarlo gráficamente para tener una mejor comprensión de la clsificación. 
 
 
 ```{r message= FALSE, warning=FALSE}
 
-library("factoextra")
+library(factoextra)
 
 fviz_cluster(k2, data = df_kmeans, ellipse.type = "euclid", repel = FALSE, star.plot = TRUE )
 
@@ -620,15 +610,15 @@ En el grafico podemos observar dos clusters diferenciados, esto nos da pistas so
 
 ## Conclusiones
 
-Como se ha visto se ha visto inicialmente hemos procesado y limpiado un dataset que contiene data real y extensa sobre enfermdades cardiacas, hemos realizado un proceso de elmincacion de datos ausentes y consideracion de valores extremos. 
+Como se ha visto se ha visto inicialmente hemos procesado y limpiado un dataset que contiene data real y extensa sobre enfermdades cardiacas, hemos realizado un proceso de elmincación de datos ausentes y consideración de valores extremos. 
 
-Posteriormente condujios un analisis exploratorio de los datos que nos permitio tener una primera impresion de como se comportarian las variables y lo que podriamos esperar al conducir pruebas estadisticas. 
+Posteriormente condujimos un análisis exploratorio de los datos que nos permitió tener una primera impresión de cómo se comportarían las variables y lo que podríamos esperar al conducir pruebas estadísticas. 
 
-En cuanto a las pruebas aplicadas, partimos de un regresion lineal que resulta util para conocer la relacion que existe entre las variables del modelo, luego elaboramos un arbol de decision que nos permitio geenrar reglas de comportamiento de las variables y asi poder conocer las condiciones que suceden en los distintos casos de la variables obetivo. 
+En cuanto a las pruebas aplicadas, partimos de un regresión lineal que resulta útil para conocer la relación que existe entre las variables del modelo, luego elaboramos un árbol de decisión que nos permitió generar reglas de comportamiento de las variables y así poder conocer las condiciones que suceden en los distintos casos de la variables obetivo. 
 
-Finalmente aplicamos un analisis de k-means donde obtuvimos una agrupacion de las variables del modelos en funcion del efecto que tiene sobre la ausencia o presencia de enfermedad.
+Finalmente, aplicamos un análisis de k-means donde obtuvimos una agrupación de las variables del modelos en función del efecto que tiene sobre la ausencia o presencia de enfermedad.
 
-Todos los analisis, desde el exploratorio al estadistico, permitieron tener una caracterizacion y comprension profunda de las variables que conforman el dataset de estudio.
+Todos los analisis, desde el exploratorio al estadistico, permitieron tener una caracterización y comprensión profunda de las variables que conforman el dataset de estudio. Podemos afirmar, entonces, que sí hemos sido capaces de responder al problema con el que partíamos en un principio que consistía en saber si podríamos determinar las enfermedades cardiovasculares en los pacientes.
 
 
 
